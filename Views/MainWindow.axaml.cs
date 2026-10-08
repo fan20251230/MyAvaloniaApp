@@ -3,6 +3,7 @@ using Avalonia.Interactivity;
 using MyAvaloniaApp.Models;
 using DrawingPoint = System.Drawing.Point;
 using DrawingRectangle = System.Drawing.Rectangle;
+using Avalonia.Media;
 
 namespace MyAvaloniaApp.Views;
 
@@ -28,6 +29,13 @@ public partial class MainWindow : Window
         DownButton.Click += MoveDown_Click;
         LeftButton.Click += MoveLeft_Click;
         RightButton.Click += MoveRight_Click;
+        UpLeftButton.Click += MoveUpLeft_Click;
+        UpRightButton.Click += MoveUpRight_Click;
+        DownLeftButton.Click += MoveDownLeft_Click;
+        DownRightButton.Click += MoveDownRight_Click;
+        RotateLeftButton.Click += RotateLeft_Click;
+        RotateRightButton.Click += RotateRight_Click;
+
 
         UpdateRobotPosition();
     }
@@ -56,9 +64,50 @@ public partial class MainWindow : Window
         UpdateRobotPosition();
     }
 
+    private void MoveUpLeft_Click(object? sender, RoutedEventArgs e)
+    {
+        robot.Bewegen(Parameters.Direction.UpLeft);
+        UpdateRobotPosition();
+    }
+
+    private void MoveUpRight_Click(object? sender, RoutedEventArgs e)
+    {
+        robot.Bewegen(Parameters.Direction.UpRight);
+        UpdateRobotPosition();
+    }
+
+    private void MoveDownLeft_Click(object? sender, RoutedEventArgs e)
+    {
+        robot.Bewegen(Parameters.Direction.DownLeft);
+        UpdateRobotPosition();
+    }
+
+    private void MoveDownRight_Click(object? sender, RoutedEventArgs e)
+    {
+        robot.Bewegen(Parameters.Direction.DownRight);
+        UpdateRobotPosition();
+    }
+    
+    private void RotateLeft_Click(object? sender, RoutedEventArgs e)
+    {
+        robot.Drehen(false);
+        UpdateRobotPosition();
+    }
+
+    private void RotateRight_Click(object? sender, RoutedEventArgs e)
+    {
+        robot.Drehen(true);
+        UpdateRobotPosition();
+    }
+
     private void UpdateRobotPosition()
     {
         Canvas.SetLeft(robotRectangle, robot.Location.X);
         Canvas.SetTop(robotRectangle, robot.Location.Y);
+
+        robotRectangle.RenderTransform = new RotateTransform
+        {
+            Angle = robot.Angle
+        };
     }
 }

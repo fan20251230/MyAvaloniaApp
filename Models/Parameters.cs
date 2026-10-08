@@ -7,6 +7,9 @@ public static class Parameters
 
     // 其他类通过这个属性读取步长
     public static int Step => step;
+    private const int rotationStep = 15;
+
+    public static int RotationStep => rotationStep;
 
     // 机器人可以移动的方向
     public enum Direction
@@ -15,6 +18,11 @@ public static class Parameters
         Up,
         Down,
         Left,
-        Right
+        Right,
+        UpLeft,
+        UpRight,
+        DownLeft,
+        DownRight
+
     }
 }

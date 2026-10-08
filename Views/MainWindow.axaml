@@ -26,17 +26,66 @@
                         Width="60"
                         Height="40"
                         Canvas.Left="300"
-                        Canvas.Top="300">
+                        Canvas.Top="300"
+                        RenderTransformOrigin="50%,50%">
+                <Rectangle.RenderTransform>
+                    <RotateTransform Angle="0" />
+                </Rectangle.RenderTransform>
                 <Rectangle.Fill>
                     <ImageBrush Source="avares://MyAvaloniaApp/Assets/robot_platform.png"
                                 Stretch="UniformToFill" />
                 </Rectangle.Fill>
             </Rectangle>
-            <Grid Height="95" Width="160" Canvas.Left="730" Canvas.Top="500">
-                <Button x:Name="UpButton" Content="Up" HorizontalAlignment="Center" VerticalAlignment="Top" Width="40" FontSize="16" />
-                <Button x:Name="DownButton" Content="Down" HorizontalAlignment="Center" VerticalAlignment="Bottom" Width="60" FontSize="16" />
-                <Button x:Name="LeftButton" Content="Left" HorizontalAlignment="Left" VerticalAlignment="Center" Width="50" FontSize="16"  />
-                <Button x:Name="RightButton" Content="Right" HorizontalAlignment="Right" VerticalAlignment="Center" Width="55" FontSize="16"  />
+            <!-- 逆时针旋转按钮 -->
+            <Button x:Name="RotateLeftButton"
+                    Content="↶ Rotate"
+                    Canvas.Left="620"
+                    Canvas.Top="350"
+                    Width="130" />
+
+            <!-- 顺时针旋转按钮 -->
+            <Button x:Name="RotateRightButton"
+                    Content="Rotate ↷"
+                    Canvas.Left="760"
+                    Canvas.Top="350"
+                    Width="130" />
+
+
+
+
+
+            <Grid Canvas.Left="620" Canvas.Top="420" Width="270" Height="150" RowDefinitions="*,*,*" ColumnDefinitions="*,*,*">
+                <Button x:Name="UpLeftButton" Content="↖" Grid.Row="0" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                
+                <Button x:Name="UpButton" Content="Up" Grid.Row="0" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" />
+
+                <Button x:Name="UpRightButton" Content="↗" Grid.Row="0" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" />
+
+                <Button x:Name="LeftButton" Content="Left" Grid.Row="1" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" />
+
+                <Button x:Name="RightButton" Content="Right" Grid.Row="1" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" />
+
+                <Button x:Name="DownLeftButton"
+                        Content="↙"
+                        Grid.Row="2" Grid.Column="0"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center" />
+
+                <Button x:Name="DownButton"
+                        Content="Down"
+                        Grid.Row="2" Grid.Column="1"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center" />
+
+                <Button x:Name="DownRightButton"
+                        Content="↘"
+                        Grid.Row="2" Grid.Column="2"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center" />
+            
+            
+            
+        
             </Grid>
         
         </Canvas>
