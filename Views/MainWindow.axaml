@@ -7,7 +7,10 @@
         x:Class="smartFactoryApp.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         Icon="/Assets/avalonia-logo.ico"
-        Title="smartFactoryApp">
+        Width="900" 
+        Height="600" 
+        Title="smartFactoryApp" >
+       
 
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,
@@ -15,8 +18,208 @@
         <vm:MainViewModel />
     </Design.DataContext>
 
-    <TextBox Text="{Binding Greeting}"
-             HorizontalAlignment="Center"
-             VerticalAlignment="Center" />
+    <Grid>
+     <Image Source="avares://smartFactoryApp/Assets/factory_plan.png"
+           Stretch="None"/>
+ 
+    <Canvas x:Name="canvasFactory" HorizontalAlignment="Left" Height="600" VerticalAlignment="Top" Width="900" >
+      
+       
+        <!-- 机器人控制面板：3列 × 4行 -->
+        <Grid Canvas.Left="750"
+                Canvas.Top="430"
+                Width="140"
+                Height="150"
+                RowDefinitions="*,*,*,*"
+                ColumnDefinitions="*,*,*"
+                RowSpacing="5"
+                ColumnSpacing="5">
+
+    <!-- 第一行 -->
+            <Button Grid.Row="0" Grid.Column="0"
+                Content="↖" Click="MoveUpLeft_Click"/>
+            <Button Grid.Row="0" Grid.Column="1"
+                Content="↑" Click="MoveUp_Click"/>
+            <Button Grid.Row="0" Grid.Column="2"
+                Content="↗" Click="MoveUpRight_Click"/>
+
+    <!-- 第二行 -->
+            <Button Grid.Row="1" Grid.Column="0"
+                Content="←" Click="MoveLeft_Click"/>
+            <Button Grid.Row="1" Grid.Column="1"
+                Content="■" IsEnabled="False"/>
+            <Button Grid.Row="1" Grid.Column="2"
+                Content="→" Click="MoveRight_Click"/>
+
+    <!-- 第三行 -->
+            <Button Grid.Row="2" Grid.Column="0"
+                Content="↙" Click="MoveDownLeft_Click"/>
+            <Button Grid.Row="2" Grid.Column="1"
+                Content="↓" Click="MoveDown_Click"/>
+            <Button Grid.Row="2" Grid.Column="2"
+                Content="↘" Click="MoveDownRight_Click"/>
+
+    <!-- 第四行：旋转控制 -->
+            <Button Grid.Row="3" Grid.Column="0"
+                Content="↺" Click="RotateLeft_Click"/>
+            <Button Grid.Row="3" Grid.Column="1"
+                Content="0°" Click="ResetAngle_Click"/>
+            <Button Grid.Row="3" Grid.Column="2"
+                Content="↻" Click="RotateRight_Click"/>
+
+        </Grid>
+        <!-- 传送带 Start / Stop 控制 -->
+        <Grid Canvas.Left="620"
+                Canvas.Top="340"
+                Width="260"
+                Height="40"
+                ColumnDefinitions="*,*"
+                ColumnSpacing="10">
+
+            <Button Grid.Column="0"
+                Content="Start"
+                HorizontalAlignment="Stretch"
+                Click="Start_Click"/>
+
+            <Button Grid.Column="1"
+                Content="Stop"
+                HorizontalAlignment="Stretch"
+                Click="Stop_Click"/>
+
+        </Grid>
+        <!-- 红色生产线的传送带 -->
+        <Rectangle Canvas.Left="{Binding ProductionRedX}"
+           Canvas.Top="{Binding ProductionRedY}"
+           Width="90"
+           Height="24"
+           Fill="#808080"
+           Stroke="#404040"
+           StrokeThickness="2"
+           RadiusX="5"
+           RadiusY="5"
+           RenderTransformOrigin="0%,0%">
+            <Rectangle.RenderTransform>
+                <RotateTransform Angle="{Binding ProductionRedAngle}"/>
+            </Rectangle.RenderTransform>
+        </Rectangle>
+
+        <!-- 蓝色传送带：右上 -->
+        <Rectangle Canvas.Left="{Binding ProductionBlueX}"
+           Canvas.Top="{Binding ProductionBlueY}"
+           Width="90"
+           Height="24"
+           Fill="#808080"
+           Stroke="#404040"
+           StrokeThickness="2"
+           RadiusX="5"
+           RadiusY="5"
+           RenderTransformOrigin="0%,0%">
+            <Rectangle.RenderTransform>
+                <RotateTransform Angle="{Binding ProductionBlueAngle}"/>
+            </Rectangle.RenderTransform>
+        </Rectangle>
+
+        <!-- 黄色传送带：左下 -->
+        <Rectangle Canvas.Left="{Binding ProductionYellowX}"
+           Canvas.Top="{Binding ProductionYellowY}"
+           Width="90"
+           Height="24"
+           Fill="#808080"
+           Stroke="#404040"
+           StrokeThickness="2"
+           RadiusX="5"
+           RadiusY="5"
+           RenderTransformOrigin="0%,0%">
+            <Rectangle.RenderTransform>
+                <RotateTransform Angle="{Binding ProductionYellowAngle}"/>
+            </Rectangle.RenderTransform>
+        </Rectangle>
+
+        <!-- 绿色传送带：右下 -->
+        <Rectangle Canvas.Left="{Binding ProductionGreenX}"
+           Canvas.Top="{Binding ProductionGreenY}"
+           Width="90"
+           Height="24"
+           Fill="#808080"
+           Stroke="#404040"
+           StrokeThickness="2"
+           RadiusX="5"
+           RadiusY="5"
+           RenderTransformOrigin="0%,0%">
+            <Rectangle.RenderTransform>
+                <RotateTransform Angle="{Binding ProductionGreenAngle}"/>
+            </Rectangle.RenderTransform>
+        </Rectangle>
+
+
+        <!-- 四条生产线，共16个积木 -->
+        <ItemsControl ItemsSource="{Binding BricksView}"
+              Width="900"
+              Height="600">
+
+            <!-- 使用 Canvas 定位积木 -->
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Canvas/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+
+            <!-- 设置每个积木容器的位置 -->
+            <ItemsControl.Styles>
+                <Style Selector="ContentPresenter" x:DataType="vm:LegoBrickViewModel">
+                    
+                    <Setter Property="Canvas.Left"
+                        Value="{Binding X}"/>
+                    <Setter Property="Canvas.Top"
+                        Value="{Binding Y}"/>
+                </Style>
+            </ItemsControl.Styles>
+
+            <!-- 设置每个积木的颜色和旋转角度 -->
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:LegoBrickViewModel">
+                    <Rectangle Width="12"
+                       Height="12"
+                       Fill="{Binding Color}"
+                       Stroke="Black"
+                       RenderTransformOrigin="50%,50%">
+
+                        <Rectangle.RenderTransform>
+                            <RotateTransform Angle="{Binding Angle}"/>
+                        </Rectangle.RenderTransform>
+
+                    </Rectangle>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+
+        </ItemsControl>
+        <Rectangle x:Name="RobotRectangle"
+                    Canvas.Left="{Binding RobotX}"
+                    Canvas.Top="{Binding RobotY}"
+                    Width="70"
+                    Height="50"
+                    Stroke="Black"
+                    RenderTransformOrigin="50%,50%">
+
+            <Rectangle.Fill>
+                <ImageBrush Source="avares://smartFactoryApp/Assets/robot.png"/>
+            </Rectangle.Fill>
+
+            <Rectangle.RenderTransform>
+                <RotateTransform Angle="{Binding RobotAngle}"/>
+            </Rectangle.RenderTransform>
+
+        </Rectangle>
+
+        <!-- 红色传送带上方显示机器人 X 坐标 -->
+        <TextBlock Canvas.Left="60"
+           Canvas.Top="40"
+           FontSize="20"
+           FontWeight="Bold"
+           Foreground="Red"
+           Text="{Binding RobotX}"/>
+    </Canvas>
+  
+  </Grid>
 
 </Window>
