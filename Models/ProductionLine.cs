@@ -60,7 +60,7 @@ public class ProductionLine
 
     double radians = Angle * Math.PI / 180.0;
 
-    double spacing = 15.0;
+    double spacing = 24.0;
     double brickSize = 12.0;
 
     // 以传送带左上角为旋转基准
@@ -70,19 +70,19 @@ public class ProductionLine
     switch (Color)
 {
     case Parameters.LegoColor.red:
-        sideOffset = 24.0;
+        sideOffset = 10.0;
         break;
 
     case Parameters.LegoColor.blue:
-        sideOffset = 32.0;
+        sideOffset = 47.0;
         break;
 
     case Parameters.LegoColor.yellow:
-        sideOffset = -12.0;
+        sideOffset = -2.0;
         break;
 
     case Parameters.LegoColor.green:
-        sideOffset = -17.0;
+        sideOffset = -2.0;
         break;
 
     default:
@@ -140,6 +140,10 @@ public class ProductionLine
 
         foreach (LegoBrick brick in Bricks)
         {
+             // 已被机器人抓住的积木不再随传送带移动
+             if (brick.IsDocked)
+                continue;
+
             Point oldLocation = brick.Location;
 
             brick.Location = new Point(

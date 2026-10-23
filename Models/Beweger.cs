@@ -104,15 +104,15 @@ namespace smartFactoryApp.Models
         double newX = Location.X + rotatedDx;
         double newY = Location.Y + rotatedDy;
 
-    // 6. 检查移动后的坐标是否仍在边界内
-        if (newX >= Borders.Left &&
-            newX <= Borders.Right &&
-            newY >= Borders.Top &&
-            newY <= Borders.Bottom)
-        {
-            Location = new Point((int)Math.Round(newX),
-                             (int)Math.Round(newY));
-        }
+    if (newX >= Borders.Left &&
+    newX <= Borders.Right &&
+    newY >= Borders.Top &&
+    newY <= Borders.Bottom)
+{
+    Location = new Point(
+        (int)Math.Round(newX),
+        (int)Math.Round(newY));
+}
     }
     }
 }

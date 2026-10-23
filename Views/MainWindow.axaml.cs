@@ -66,6 +66,8 @@ public partial class MainWindow : Window
     private void RotateRight_Click(object? sender,
     Avalonia.Interactivity.RoutedEventArgs e)
     {
+        
+
         if (DataContext is MainViewModel vm)
         {
             vm.RotateRight();
@@ -99,5 +101,29 @@ public partial class MainWindow : Window
    {
       ViewModel?.StopProduction();
    }
+
+   private void StopRobot_Click(object? sender, RoutedEventArgs e)
+    {
+        ViewModel?.StopRobot();
+
+    }
+
+    private void Dock_Click(object? sender, RoutedEventArgs e)
+{
+    if (DataContext is MainViewModel vm)
+    {
+        vm.Dock();
+    }
+}
+
+private void Undock_Click(object? sender, RoutedEventArgs e)
+{
+    if (DataContext is MainViewModel vm)
+    {
+        vm.Undock();
+    }
+}
+
+
 
 }

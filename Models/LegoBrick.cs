@@ -11,6 +11,9 @@ namespace smartFactoryApp.Models
         private LegoSize size; 
         public LegoColor Color { get {return color;} set {color = value;}}
         public LegoSize Size { get {return size;} set {size = value;}}
+
+        public bool IsDocked { get; set; } = false;
+        
         public Pose LegoPose { get; }
 
         public LegoBrick(Pose pose, LegoColor color, LegoSize size) : base(pose)

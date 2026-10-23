@@ -17,7 +17,7 @@ namespace smartFactoryApp.Models;
 
     public static class ViewParameters
     {
-        public static Pose RobotPose = new Pose(260, 280, 0);
+        public static Pose RobotPose = new Pose(260, 180, 0);
         public static Pose BrickPose = new Pose(250, 250, 45);
         public static Rectangle Borders = new Rectangle(37, 37, 452, 480);
     }

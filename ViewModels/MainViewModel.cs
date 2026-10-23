@@ -15,6 +15,34 @@ public partial class MainViewModel : ViewModelBase
 {
     Factory factory;
     DispatcherTimer timer;
+
+    // 机器人连续运动专用定时器
+    private DispatcherTimer robotTimer;
+
+    // false = Step 模式，true = Move 模式
+    private bool continuousMode = false;
+
+    // 当前运动方向
+    private Direction currentDirection = Direction.stop;
+
+    // 当前旋转方向：-1 左转，1 右转，0 不旋转
+    private int rotationDirection = 0;
+
+    public bool ContinuousMode
+    {
+        get => continuousMode;
+        set
+        {
+            if (continuousMode == value)
+                return;
+
+            continuousMode = value;
+            StopRobot();
+            OnPropertyChanged(nameof(ContinuousMode));
+        }
+    }
+
+
     public double RobotX => factory.RobotX;
     public double RobotY => factory.RobotY;
     public double RobotAngle => factory.RobotAngle;
@@ -66,6 +94,9 @@ public partial class MainViewModel : ViewModelBase
         timer = new DispatcherTimer();
         timer.Interval = TimeSpan.FromMilliseconds(timerInteval);
         timer.Tick += Timer_Tick; 
+        robotTimer = new DispatcherTimer();
+        robotTimer.Interval = TimeSpan.FromMilliseconds(100);
+        robotTimer.Tick += RobotTimer_Tick;
         
     }
     private void Timer_Tick(object? sender, EventArgs e)
@@ -76,61 +107,60 @@ public partial class MainViewModel : ViewModelBase
     }
     public void MoveUp()
     {
-        factory.RobotBewegen(Direction.up);
-        NotifyRobotPoseChanged();
+        ExecuteMovement(Direction.up);  
     }
     public void MoveDown()
     {
-        factory.RobotBewegen(Direction.down);
-        NotifyRobotPoseChanged();
+        ExecuteMovement(Direction.down);
     }
     public void MoveLeft()
     {
-        factory.RobotBewegen(Direction.left);
-        NotifyRobotPoseChanged();
+        ExecuteMovement(Direction.left);
+        
     }
     public void MoveRight()
     {
-        factory.RobotBewegen(Direction.right);
-        NotifyRobotPoseChanged();
+        ExecuteMovement(Direction.right);
+        
     }
     public void MoveUpLeft()
     {
-        factory.RobotBewegen(Direction.upLeft);
-        NotifyRobotPoseChanged();
+        ExecuteMovement(Direction.upLeft);
+        
     }
 
     public void MoveUpRight()
     {
-        factory.RobotBewegen(Direction.upRight);
-        NotifyRobotPoseChanged();
+        ExecuteMovement(Direction.upRight);
+        
     }
 
     public void MoveDownLeft()
     {
-        factory.RobotBewegen(Direction.downLeft);
-        NotifyRobotPoseChanged();
+        ExecuteMovement(Direction.downLeft);
+        
     }
 
     public void MoveDownRight()
     {
-        factory.RobotBewegen(Direction.downRight);
-         NotifyRobotPoseChanged();
+        ExecuteMovement(Direction.downRight);
+               
     }
     public void RotateRight()
     {
-        factory.RobotRotateRight();
-        NotifyRobotPoseChanged();
+        ExecuteRotation(1);
+        
     }
 
     public void RotateLeft()
     {
-        factory.RobotRotateLeft();
-        NotifyRobotPoseChanged();
+        ExecuteRotation(-1);
+        
     }
 
     public void ResetAngle()
     {
+        StopRobot();
         factory.RobotResetAngle();
         NotifyRobotPoseChanged();
     }
@@ -139,6 +169,9 @@ public partial class MainViewModel : ViewModelBase
         OnPropertyChanged(nameof(RobotX));
         OnPropertyChanged(nameof(RobotY));
         OnPropertyChanged(nameof(RobotAngle));
+
+         // 同时刷新 Lego 积木的位置和角度
+        NotifyLegoBricksPoseChanged();
     }
     private void NotifyLegoBricksPoseChanged()
     {
@@ -157,4 +190,106 @@ public partial class MainViewModel : ViewModelBase
     {
         timer.Stop();
     }
+
+
+    public void Dock()
+{
+    StopRobot();
+
+    if (factory.Dock())
+    {
+        NotifyLegoBricksPoseChanged();
+    }
+}
+
+   
+
+public void Undock()
+{
+    StopRobot();
+
+    if (factory.Undock())
+    {
+        NotifyLegoBricksPoseChanged();
+    }
+}
+
+
+
+    private void RobotTimer_Tick(object? sender, EventArgs e)
+{
+    double oldX = RobotX;
+    double oldY = RobotY;
+    double oldAngle = RobotAngle;
+
+    if (rotationDirection == 1)
+    {
+        factory.RobotRotateRight();
+    }
+    else if (rotationDirection == -1)
+    {
+        factory.RobotRotateLeft();
+    }
+    else if (currentDirection != Direction.stop)
+    {
+        factory.RobotBewegen(currentDirection);
+    }
+
+    NotifyRobotPoseChanged();
+
+    // 如果尝试移动，但位置没有变化，说明可能被边界阻止
+    if (currentDirection != Direction.stop &&
+        oldX == RobotX &&
+        oldY == RobotY)
+    {
+        StopRobot();
+    }
+}
+
+    private void ExecuteMovement(Direction direction)
+    {
+        if (ContinuousMode)
+        {
+            currentDirection = direction;
+            rotationDirection = 0;
+            robotTimer.Start();
+        }
+        else
+        {
+            StopRobot();
+            factory.RobotBewegen(direction);
+            NotifyRobotPoseChanged();
+        }
+    }
+
+
+    private void ExecuteRotation(int direction)
+    {
+        if (ContinuousMode)
+        {
+             currentDirection = Direction.stop;
+             rotationDirection = direction;
+             robotTimer.Start();
+        }
+        else
+        {
+            StopRobot();
+
+            if (direction == 1)
+                factory.RobotRotateRight();
+            else
+                factory.RobotRotateLeft();
+
+            NotifyRobotPoseChanged();
+        }
+    }
+
+    public void StopRobot()
+    {
+            robotTimer.Stop();
+            currentDirection = Direction.stop;
+            rotationDirection = 0;
+    }
+
+
 }

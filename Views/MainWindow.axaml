@@ -25,6 +25,23 @@
     <Canvas x:Name="canvasFactory" HorizontalAlignment="Left" Height="600" VerticalAlignment="Top" Width="900" >
       
        
+        <!-- 机器人运动模式选择 -->
+        <StackPanel Canvas.Left="620"
+                    Canvas.Top="430"
+                    Orientation="Vertical"
+                    Spacing="10">
+
+            <RadioButton Content="Move"
+                        GroupName="MovementMode"
+                        IsChecked="{Binding ContinuousMode, Mode=TwoWay}"/>
+
+            <RadioButton Content="Step"
+                    GroupName="MovementMode"
+                    IsChecked="True"/>
+
+        </StackPanel>
+
+
         <!-- 机器人控制面板：3列 × 4行 -->
         <Grid Canvas.Left="750"
                 Canvas.Top="430"
@@ -47,7 +64,8 @@
             <Button Grid.Row="1" Grid.Column="0"
                 Content="←" Click="MoveLeft_Click"/>
             <Button Grid.Row="1" Grid.Column="1"
-                Content="■" IsEnabled="False"/>
+                    Content="■"
+                    Click="StopRobot_Click"/>
             <Button Grid.Row="1" Grid.Column="2"
                 Content="→" Click="MoveRight_Click"/>
 
@@ -87,69 +105,141 @@
                 Click="Stop_Click"/>
 
         </Grid>
-        <!-- 红色生产线的传送带 -->
-        <Rectangle Canvas.Left="{Binding ProductionRedX}"
-           Canvas.Top="{Binding ProductionRedY}"
-           Width="90"
-           Height="24"
-           Fill="#808080"
-           Stroke="#404040"
-           StrokeThickness="2"
-           RadiusX="5"
-           RadiusY="5"
-           RenderTransformOrigin="0%,0%">
-            <Rectangle.RenderTransform>
+
+        <!-- Dock / Undock 控制 -->
+        <StackPanel Canvas.Left="620"
+                    Canvas.Top="390"
+                    Orientation="Horizontal"
+                    Spacing="10">
+
+            <Button Content="Dock"
+                    Width="120"
+                    Click="Dock_Click"/>
+
+            <Button Content="Undock"
+                    Width="120"
+                    Click="Undock_Click"/>
+
+        </StackPanel>
+
+
+        <!-- 红色生产线：使用教授提供的图片 -->
+        <Image Canvas.Left="{Binding ProductionRedX}"
+                Canvas.Top="{Binding ProductionRedY}"
+                Width="110"
+                Height="45"
+                Source="avares://smartFactoryApp/Assets/production_red_2.png"
+                Stretch="Fill"
+                RenderTransformOrigin="0%,0%">
+            <Image.RenderTransform>
                 <RotateTransform Angle="{Binding ProductionRedAngle}"/>
-            </Rectangle.RenderTransform>
-        </Rectangle>
+            </Image.RenderTransform>
+        </Image>
 
-        <!-- 蓝色传送带：右上 -->
-        <Rectangle Canvas.Left="{Binding ProductionBlueX}"
-           Canvas.Top="{Binding ProductionBlueY}"
-           Width="90"
-           Height="24"
-           Fill="#808080"
-           Stroke="#404040"
+
+        <!-- Red Line 碰撞区域：测试用 -->
+<Rectangle Canvas.Left="{Binding ProductionRedX}"
+           Canvas.Top="{Binding ProductionRedY}"
+           Width="110"
+           Height="45"
+           Stroke="Orange"
            StrokeThickness="2"
-           RadiusX="5"
-           RadiusY="5"
+           Fill="Transparent"
+           IsHitTestVisible="False"
            RenderTransformOrigin="0%,0%">
-            <Rectangle.RenderTransform>
+
+    <Rectangle.RenderTransform>
+        <RotateTransform Angle="{Binding ProductionRedAngle}"/>
+    </Rectangle.RenderTransform>
+
+</Rectangle>
+
+        <!-- 蓝色生产线 -->
+        <Image Canvas.Left="{Binding ProductionBlueX}"
+                Canvas.Top="{Binding ProductionBlueY}"
+                Width="110"
+                Height="45"
+                Source="avares://smartFactoryApp/Assets/production_blue_2.png"
+                Stretch="Fill"
+                RenderTransformOrigin="0%,0%">
+            <Image.RenderTransform>
                 <RotateTransform Angle="{Binding ProductionBlueAngle}"/>
-            </Rectangle.RenderTransform>
-        </Rectangle>
+            </Image.RenderTransform>
+        </Image>
 
-        <!-- 黄色传送带：左下 -->
-        <Rectangle Canvas.Left="{Binding ProductionYellowX}"
-           Canvas.Top="{Binding ProductionYellowY}"
-           Width="90"
-           Height="24"
-           Fill="#808080"
-           Stroke="#404040"
+
+
+
+
+        <!-- Blue Line 碰撞区域 -->
+<Rectangle Canvas.Left="{Binding ProductionBlueX}"
+           Canvas.Top="{Binding ProductionBlueY}"
+           Width="110"
+           Height="45"
+           Stroke="Orange"
            StrokeThickness="2"
-           RadiusX="5"
-           RadiusY="5"
+           Fill="Transparent"
+           IsHitTestVisible="False"
            RenderTransformOrigin="0%,0%">
-            <Rectangle.RenderTransform>
+
+    <Rectangle.RenderTransform>
+        <RotateTransform Angle="{Binding ProductionBlueAngle}"/>
+    </Rectangle.RenderTransform>
+
+</Rectangle>
+
+        <!-- 黄色生产线 -->
+        <Image Canvas.Left="{Binding ProductionYellowX}"
+                Canvas.Top="{Binding ProductionYellowY}"
+                Width="110"
+                Height="45"
+                Source="avares://smartFactoryApp/Assets/production_yellow_2.png"
+                Stretch="Fill"
+                RenderTransformOrigin="0%,0%">
+            <Image.RenderTransform>
                 <RotateTransform Angle="{Binding ProductionYellowAngle}"/>
-            </Rectangle.RenderTransform>
-        </Rectangle>
+            </Image.RenderTransform>
+        </Image>
 
-        <!-- 绿色传送带：右下 -->
-        <Rectangle Canvas.Left="{Binding ProductionGreenX}"
-           Canvas.Top="{Binding ProductionGreenY}"
-           Width="90"
-           Height="24"
-           Fill="#808080"
-           Stroke="#404040"
+
+<!-- Yellow Line 碰撞区域 -->
+<Rectangle Canvas.Left="{Binding ProductionYellowX}"
+           Canvas.Top="{Binding ProductionYellowY}"
+           Width="110"
+           Height="45"
+           Stroke="Orange"
            StrokeThickness="2"
-           RadiusX="5"
-           RadiusY="5"
-           RenderTransformOrigin="0%,0%">
-            <Rectangle.RenderTransform>
+           Fill="Transparent"
+           IsHitTestVisible="False"/>
+
+
+
+        <!-- 绿色生产线 -->
+        <Image Canvas.Left="{Binding ProductionGreenX}"
+                Canvas.Top="{Binding ProductionGreenY}"
+                Width="110"
+                Height="45"
+                Source="avares://smartFactoryApp/Assets/production_green_2.png"
+                Stretch="Fill"
+                RenderTransformOrigin="0%,0%">
+            <Image.RenderTransform>
                 <RotateTransform Angle="{Binding ProductionGreenAngle}"/>
-            </Rectangle.RenderTransform>
-        </Rectangle>
+            </Image.RenderTransform>
+        </Image>
+
+
+
+<!-- Green Line 碰撞区域 -->
+<Rectangle Canvas.Left="{Binding ProductionGreenX}"
+           Canvas.Top="{Binding ProductionGreenY}"
+           Width="110"
+           Height="45"
+           Stroke="Orange"
+           StrokeThickness="2"
+           Fill="Transparent"
+           IsHitTestVisible="False"/>
+
+
 
 
         <!-- 四条生产线，共16个积木 -->
@@ -193,31 +283,101 @@
             </ItemsControl.ItemTemplate>
 
         </ItemsControl>
-        <Rectangle x:Name="RobotRectangle"
-                    Canvas.Left="{Binding RobotX}"
-                    Canvas.Top="{Binding RobotY}"
-                    Width="70"
-                    Height="50"
-                    Stroke="Black"
-                    RenderTransformOrigin="50%,50%">
+        <!-- 机器人及其碰撞区域 -->
+<Canvas Canvas.Left="{Binding RobotX}"
+        Canvas.Top="{Binding RobotY}"
+        Width="70"
+        Height="50"
+        RenderTransformOrigin="50%,50%">
 
-            <Rectangle.Fill>
-                <ImageBrush Source="avares://smartFactoryApp/Assets/robot.png"/>
-            </Rectangle.Fill>
+    <!-- 整体旋转 -->
+    <Canvas.RenderTransform>
+        <RotateTransform Angle="{Binding RobotAngle}"/>
+    </Canvas.RenderTransform>
 
-            <Rectangle.RenderTransform>
-                <RotateTransform Angle="{Binding RobotAngle}"/>
-            </Rectangle.RenderTransform>
+    <!-- 红框：机器人原始图片区域 -->
+    <Rectangle Width="70"
+               Height="50"
+               Stroke="Red"
+               StrokeThickness="2">
 
-        </Rectangle>
+        <Rectangle.Fill>
+            <ImageBrush Source="avares://smartFactoryApp/Assets/robot_2.png"/>
+        </Rectangle.Fill>
 
-        <!-- 红色传送带上方显示机器人 X 坐标 -->
-        <TextBlock Canvas.Left="60"
+    </Rectangle>
+
+    <!-- 蓝框：机器人碰撞区域（暂定） -->
+    <Rectangle Canvas.Left="19"
+               Canvas.Top="-2"
+               Width="30"
+               Height="52"
+               Stroke="Blue"
+               StrokeThickness="2"
+               Fill="Transparent"
+               IsHitTestVisible="False"/>
+
+</Canvas>
+
+
+
+
+        <!-- Delivery Line：工厂顶部中央 -->
+        <Image Canvas.Left="212"
+                Canvas.Top="40"
+                Width="185"
+                Height="65"
+                Source="avares://smartFactoryApp/Assets/production_delivery_2.png"
+                Stretch="Fill"/>
+
+
+                <!-- Delivery Line 碰撞区域 -->
+<Rectangle Canvas.Left="212"
            Canvas.Top="40"
-           FontSize="20"
-           FontWeight="Bold"
-           Foreground="Red"
-           Text="{Binding RobotX}"/>
+           Width="185"
+           Height="65"
+           Stroke="Orange"
+           StrokeThickness="2"
+           Fill="Transparent"
+           IsHitTestVisible="False"/>
+
+        <!-- Recycling Line：recycling line -->
+        <Image Canvas.Left="240"
+                Canvas.Top="280"
+                Width="110"
+                Height="45"
+                Source="avares://smartFactoryApp/Assets/production_recycling_2.png"
+                Stretch="Fill"/>
+
+                <!-- Recycling Line 碰撞区域：仅用于可视化 -->
+<Rectangle Canvas.Left="240"
+           Canvas.Top="280"
+           Width="110"
+           Height="45"
+           Stroke="Orange"
+           StrokeThickness="2"
+           Fill="Transparent"
+           IsHitTestVisible="False"/>
+
+        
+        <!-- 机器人位置和角度 -->
+        <StackPanel Canvas.Left="50"
+                    Canvas.Top="45"
+                    Spacing="4">
+
+            <TextBlock Foreground="Red"
+                        FontSize="14"
+                        Text="{Binding RobotX, StringFormat='X: {0:F1}'}"/>
+
+            <TextBlock Foreground="Red"
+                        FontSize="14"
+                        Text="{Binding RobotY, StringFormat='Y: {0:F1}'}"/>
+
+            <TextBlock Foreground="Red"
+                       FontSize="14"
+                       Text="{Binding RobotAngle, StringFormat='Angle: {0:F1}°'}" />
+
+        </StackPanel>
     </Canvas>
   
   </Grid>
