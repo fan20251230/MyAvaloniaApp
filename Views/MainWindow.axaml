@@ -105,6 +105,14 @@
                 Click="Stop_Click"/>
 
         </Grid>
+        <!-- Undock 操作反馈 -->
+        <TextBlock Canvas.Left="620"
+                Canvas.Top="150"
+                Width="270"
+                Text="{Binding UndockInfo}"
+                TextWrapping="Wrap"
+                FontSize="14"
+                Foreground="Black"/>
 
         <!-- Dock / Undock 控制 -->
         <StackPanel Canvas.Left="620"
@@ -245,7 +253,8 @@
         <!-- 四条生产线，共16个积木 -->
         <ItemsControl ItemsSource="{Binding BricksView}"
               Width="900"
-              Height="600">
+              Height="600"
+              ZIndex="10">
 
             <!-- 使用 Canvas 定位积木 -->
             <ItemsControl.ItemsPanel>
@@ -298,7 +307,7 @@
     <!-- 红框：机器人原始图片区域 -->
     <Rectangle Width="70"
                Height="50"
-               Stroke="Red"
+               Stroke="Transparent"
                StrokeThickness="2">
 
         <Rectangle.Fill>
@@ -320,7 +329,23 @@
 </Canvas>
 
 
+<!-- 左侧：送往回收 -->
+<Image Canvas.Left="88"
+       Canvas.Top="40"
+       Width="120"
+       Height="65"
+       Source="avares://smartFactoryApp/Assets/forRecycling.png"
+       Stretch="Fill"
+       IsHitTestVisible="False"/>
 
+<!-- 右侧：送往客户 -->
+<Image Canvas.Left="401"
+       Canvas.Top="40"
+       Width="120"
+       Height="65"
+       Source="avares://smartFactoryApp/Assets/toCustomers.png"
+       Stretch="Fill"
+       IsHitTestVisible="False"/>
 
         <!-- Delivery Line：工厂顶部中央 -->
         <Image Canvas.Left="212"
@@ -361,9 +386,9 @@
 
         
         <!-- 机器人位置和角度 -->
-        <StackPanel Canvas.Left="50"
-                    Canvas.Top="45"
-                    Spacing="4">
+        <StackPanel Canvas.Left="620"
+            Canvas.Top="240"
+            Spacing="4">
 
             <TextBlock Foreground="Red"
                         FontSize="14"

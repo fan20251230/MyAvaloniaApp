@@ -115,6 +115,40 @@ public class ProductionLine
         ));
     }
 }
+    
+
+
+    // 交付完成后，在原来的生产位置补充一块积木
+public void ReplaceDeliveredBrick(LegoBrick deliveredBrick)
+{
+    // 保留最初的生产位置、颜色和尺寸
+    LegoBrick replacement = new LegoBrick(
+        deliveredBrick.LegoPose,
+        Color,
+        deliveredBrick.Size);
+
+    // 计算传送带当前相对于初始位置的位移
+    int forwardSteps = tickCount <= stepsPerDirection
+        ? tickCount
+        : 2 * stepsPerDirection - tickCount;
+
+    double distance = forwardSteps * 3.0;
+    double radians = Angle * Math.PI / 180.0;
+
+    Point initialLocation = replacement.Location;
+
+    replacement.Location = new Point(
+        initialLocation.X
+            + (int)Math.Round(distance * Math.Cos(radians)),
+        initialLocation.Y
+            + (int)Math.Round(distance * Math.Sin(radians)));
+
+    bricks.Add(replacement);
+}
+    
+    
+    
+    
     // 后续实现沿传送带方向运动
     public void Bewegen()
     {

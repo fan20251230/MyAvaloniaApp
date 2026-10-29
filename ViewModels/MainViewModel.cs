@@ -8,6 +8,7 @@ using Avalonia.Controls.Converters;
 using System.Collections.Generic;
 using Avalonia.Threading;
 using System;
+using System.Collections.ObjectModel;
 
 namespace smartFactoryApp.ViewModels;
 
@@ -68,7 +69,8 @@ public partial class MainViewModel : ViewModelBase
     public double ProductionGreenAngle => factory.ProductionGreen.Angle;
 
     
-    public List<LegoBrickViewModel> BricksView { get; } = new List<LegoBrickViewModel>();
+    public ObservableCollection<LegoBrickViewModel> BricksView { get; }
+    = new ObservableCollection<LegoBrickViewModel>();
     public MainViewModel()
     {
         factory = new Factory();
@@ -100,11 +102,15 @@ public partial class MainViewModel : ViewModelBase
         
     }
     private void Timer_Tick(object? sender, EventArgs e)
-    {
-       
-        factory.ProductionLinesBewegen();
-        NotifyLegoBricksPoseChanged();
-    }
+{
+    factory.ProductionLinesBewegen();
+
+    factory.DeliveryBricksBewegen();
+
+    factory.RecycleBricksBewegen();
+
+    NotifyLegoBricksPoseChanged();
+}
     public void MoveUp()
     {
         ExecuteMovement(Direction.up);  
@@ -173,13 +179,15 @@ public partial class MainViewModel : ViewModelBase
          // 同时刷新 Lego 积木的位置和角度
         NotifyLegoBricksPoseChanged();
     }
-    private void NotifyLegoBricksPoseChanged()
-    {
-        foreach (var brick in BricksView)
-        {
-            brick.Refresh();
-        }
-    }
+private void NotifyLegoBricksPoseChanged()
+{
+    // 先同步新增和删除
+    SyncBricksView();
+
+    // 再刷新坐标和角度
+    foreach (LegoBrickViewModel brick in BricksView)
+        brick.Refresh();
+}
 
     public void StartProduction()
     {
@@ -208,9 +216,23 @@ public void Undock()
 {
     StopRobot();
 
-    if (factory.Undock())
+    UndockResult result = factory.Undock();
+
+    switch (result)
     {
-        NotifyLegoBricksPoseChanged();
+        case UndockResult.Success:
+            UndockInfo = "Brick delivered.";
+            NotifyLegoBricksPoseChanged();
+            break;
+
+        case UndockResult.NoBrick:
+            UndockInfo = "No brick docked: pick up a brick first.";
+            break;
+
+        case UndockResult.NotOnDeliveryLine:
+            UndockInfo =
+                "Not on the delivery line: move the brick there first.";
+            break;
     }
 }
 
@@ -292,4 +314,51 @@ public void Undock()
     }
 
 
+    private string undockInfo = "";
+
+    public string UndockInfo
+    {
+        get => undockInfo;
+        set
+        {
+            if (undockInfo == value)
+                return;
+
+            undockInfo = value;
+            OnPropertyChanged(nameof(UndockInfo));
+        }
+    }
+
+
+
+// 同步工厂中的积木与界面中的积木
+private void SyncBricksView()
+{
+    HashSet<LegoBrick> activeBricks =
+        new HashSet<LegoBrick>(factory.AlleBricks());
+
+    // 删除已经不在工厂中的积木显示
+    for (int i = BricksView.Count - 1; i >= 0; i--)
+    {
+        if (!activeBricks.Contains(BricksView[i].Model))
+            BricksView.RemoveAt(i);
+    }
+
+    HashSet<LegoBrick> displayedBricks = new();
+
+    foreach (LegoBrickViewModel viewModel in BricksView)
+        displayedBricks.Add(viewModel.Model);
+
+    // 为新生产的积木增加显示
+    foreach (LegoBrick brick in activeBricks)
+    {
+        if (!displayedBricks.Contains(brick))
+            BricksView.Add(new LegoBrickViewModel(brick));
+    }
 }
+
+
+
+}
+
+

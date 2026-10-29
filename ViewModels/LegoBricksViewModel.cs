@@ -7,6 +7,7 @@ namespace smartFactoryApp.ViewModels;
 public partial class LegoBrickViewModel : ViewModelBase
 {
     private LegoBrick brick;
+    public LegoBrick Model => brick;
     [ObservableProperty] private double x;
     [ObservableProperty] private double y;
     [ObservableProperty] private double angle;
@@ -28,6 +29,6 @@ public partial class LegoBrickViewModel : ViewModelBase
     {
         X = brick.Location.X;
         Y = brick.Location.Y;
-        Angle = brick.LegoPose.Angle;
+        Angle = brick.Angle;
     }
 }

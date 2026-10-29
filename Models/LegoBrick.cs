@@ -13,7 +13,12 @@ namespace smartFactoryApp.Models
         public LegoSize Size { get {return size;} set {size = value;}}
 
         public bool IsDocked { get; set; } = false;
-        
+        public BrickStatus Status { get; set; } = BrickStatus.Ready;
+
+        // 中央回收线的等待位置编号
+        // -1 表示没有占用回收位置
+        public int RecyclePlatz { get; set; } = -1;
+
         public Pose LegoPose { get; }
 
         public LegoBrick(Pose pose, LegoColor color, LegoSize size) : base(pose)

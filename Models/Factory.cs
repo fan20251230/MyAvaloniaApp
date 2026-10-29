@@ -26,7 +26,7 @@ public class Factory
     public double RobotX => robot.Location.X;
     public double RobotY => robot.Location.Y;
     public double RobotAngle => robot.Angle;
-    
+    private bool nextDeliveryIsGood = true;
 
 // 计算机器人夹爪中心 TCP 的实际位置
 public PointF GetRobotTCP()
@@ -95,7 +95,9 @@ private LegoBrick? FindNearestBrick()
 // 搜索已经离开传送带、但当前未被抓取的积木
 foreach (LegoBrick brick in freeBricks)
 {
-    if (brick.IsDocked)
+    // 只允许抓取等待状态的积木
+    if (brick.IsDocked ||
+        brick.Status != BrickStatus.Ready)
         continue;
 
     double distance = GetDistanceToBrick(brick);
@@ -126,6 +128,9 @@ public bool Dock()
     if (brick == null)
         return false;
 
+    // 取走回收积木后，释放它占用的等待位置
+    brick.RecyclePlatz = -1;
+
     // 记录抓住的积木
     dockedBrick = brick;
     dockedBrick.IsDocked = true;
@@ -147,15 +152,163 @@ if (!freeBricks.Contains(brick))
     return true;
 }
 
-public bool Undock()
+// 判断机器人夹爪是否到达交付线附近
+private bool AufDeliveryLinie()
+{
+    PointF tcp = GetRobotTCP();
+
+    // 交付线的位置和尺寸，与现有碰撞区域一致
+    RectangleF deliveryArea = new RectangleF(
+        212, 40, 185, 65);
+
+    // 暂设 12 像素的交接容差
+    // 因为碰撞保护会阻止机器人进入交付线内部
+    deliveryArea.Inflate(12, 12);
+
+    return deliveryArea.Contains(tcp);
+}
+
+private int FreierRecyclePlatz()
+{
+    for (int slot = 0; slot < 4; slot++)
+    {
+        bool occupied = false;
+
+        foreach (LegoBrick brick in freeBricks)
+        {
+            if (brick.RecyclePlatz == slot)
+            {
+                occupied = true;
+                break;
+            }
+        }
+
+        if (!occupied)
+            return slot;
+    }
+
+    // 四个位置都被占用
+    return -1;
+}
+
+
+// 将不合格积木运回中央回收线
+// 回收出口的积木直接转入中央维修传送带
+public void RecycleBricksBewegen()
+{
+    foreach (LegoBrick brick in freeBricks)
+    {
+        if (brick.IsDocked)
+            continue;
+
+        if (brick.Status != BrickStatus.AtRecycle)
+            continue;
+
+        int slot = FreierRecyclePlatz();
+
+        // 没有空位，继续在回收出口等待
+        if (slot == -1)
+            continue;
+
+        brick.RecyclePlatz = slot;
+
+        // 中央传送带：
+        // 左上角 (240, 280)，尺寸 110 × 45
+        // 将积木完整放在传送带内部的上沿
+        brick.Location = new Point(
+            250 + slot * 24,
+            280);
+
+        brick.Angle = 0;
+
+        // 维修完成，允许重新抓取
+        brick.Status = BrickStatus.Ready;
+    }
+}
+
+
+// 每次定时器触发，让运输中的积木移动一小段
+public void DeliveryBricksBewegen()
+{
+    const int speed = 3;
+    const int customerTargetX = 455;
+    const int recycleTargetX = 142;
+
+    List<LegoBrick> deliveredBricks = new();
+
+    foreach (LegoBrick brick in freeBricks)
+    {
+        if (brick.IsDocked)
+            continue;
+
+        if (brick.Status == BrickStatus.ToCustomer)
+        {
+            int newX = Math.Min(
+                brick.Location.X + speed,
+                customerTargetX);
+
+            brick.Location = new Point(
+                newX, brick.Location.Y);
+
+            if (newX == customerTargetX)
+                brick.Status = BrickStatus.AtCustomer;
+        }
+        else if (brick.Status == BrickStatus.ToRecycle)
+        {
+            int newX = Math.Max(
+                brick.Location.X - speed,
+                recycleTargetX);
+
+            brick.Location = new Point(
+                newX, brick.Location.Y);
+
+            if (newX == recycleTargetX)
+                brick.Status = BrickStatus.AtRecycle;
+        }
+
+        if (brick.Status == BrickStatus.AtCustomer)
+            deliveredBricks.Add(brick);
+    }
+
+    // 遍历结束后，再移除交付完成的积木
+    foreach (LegoBrick brick in deliveredBricks)
+    {
+        freeBricks.Remove(brick);
+        ReplaceDeliveredBrick(brick);
+    }
+}
+
+
+
+
+// 释放机器人携带的积木
+public UndockResult Undock()
 {
     if (dockedBrick == null)
-        return false;
+        return UndockResult.NoBrick;
 
-    dockedBrick.IsDocked = false;
+    if (!AufDeliveryLinie())
+        return UndockResult.NotOnDeliveryLine;
+
+    LegoBrick brick = dockedBrick;
+
+    // 放到交付线下方白色运输带的中央
+    // 积木尺寸为 12 × 12
+    brick.Location = new Point(298, 84);
+    brick.Angle = 0;
+    brick.IsDocked = false;
+
+    // 质检决定运输方向
+    brick.Status = nextDeliveryIsGood
+        ? BrickStatus.ToCustomer
+        : BrickStatus.ToRecycle;
+
+    // 下一次有效交付使用相反结果
+    nextDeliveryIsGood = !nextDeliveryIsGood;
+
     dockedBrick = null;
 
-    return true;
+    return UndockResult.Success;
 }
    
 
@@ -183,6 +336,49 @@ private void UpdateDockedBrick()
     public ProductionLine ProductionBlue => productionBlue;
     public ProductionLine ProductionYellow => productionYellow;
     public ProductionLine ProductionGreen => productionGreen;
+
+public IEnumerable<LegoBrick> AlleBricks()
+{
+    foreach (ProductionLine line in new[]
+    {
+        productionRed,
+        productionBlue,
+        productionYellow,
+        productionGreen
+    })
+    {
+        foreach (LegoBrick brick in line.Bricks)
+            yield return brick;
+    }
+
+    foreach (LegoBrick brick in freeBricks)
+        yield return brick;
+}
+
+
+
+// 根据交付积木的颜色，通知对应生产线补充一块
+private void ReplaceDeliveredBrick(LegoBrick brick)
+{
+    switch (brick.Color)
+    {
+        case LegoColor.red:
+            productionRed.ReplaceDeliveredBrick(brick);
+            break;
+
+        case LegoColor.blue:
+            productionBlue.ReplaceDeliveredBrick(brick);
+            break;
+
+        case LegoColor.yellow:
+            productionYellow.ReplaceDeliveredBrick(brick);
+            break;
+
+        case LegoColor.green:
+            productionGreen.ReplaceDeliveredBrick(brick);
+            break;
+    }
+}
 
 
 
@@ -237,6 +433,13 @@ collisionAreas.Add(new CollisionArea(
 collisionAreas.Add(new CollisionArea(
     new Point(212, 40), 185, 65, 0));
 
+// 左侧：送往回收的运输区域
+collisionAreas.Add(new CollisionArea(
+    new Point(88, 40), 120, 65, 0));
+
+// 右侧：送往客户的运输区域
+collisionAreas.Add(new CollisionArea(
+    new Point(401, 40), 120, 65, 0));
 
 
 
