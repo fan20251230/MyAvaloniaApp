@@ -14,6 +14,17 @@ public class ProductionLine
     private int x;
     private int y;
 
+private static readonly Random random = new Random();
+
+private static readonly Parameters.LegoColor[] brickColors =
+{
+    Parameters.LegoColor.red,
+    Parameters.LegoColor.blue,
+    Parameters.LegoColor.yellow,
+    Parameters.LegoColor.green
+};
+
+
     // 属性（Eigenschaften）
     public double Angle
     {
@@ -43,7 +54,7 @@ public class ProductionLine
         Location = location;
         Angle = angle;
         Color = color;
-        CreateBricks();
+        
     }
 
     // 构造函数 2
@@ -61,7 +72,7 @@ public class ProductionLine
     double radians = Angle * Math.PI / 180.0;
 
     double spacing = 24.0;
-    double brickSize = 12.0;
+    
 
     // 以传送带左上角为旋转基准
     // 红蓝积木放在传送带下侧，黄绿放在上侧
@@ -108,26 +119,44 @@ public class ProductionLine
             Angle
         );
 
+        Parameters.LegoColor randomColor =
+            brickColors[random.Next(brickColors.Length)];
+
         bricks.Add(new LegoBrick(
             pose,
-            Color,
-            Parameters.LegoSize.small
-        ));
+            randomColor,
+            Parameters.LegoSize.small)
+        {
+            OriginLine = this
+        });
     }
 }
     
 
 
     // 交付完成后，在原来的生产位置补充一块积木
+// 成功交付后，在原来源生产线补充随机颜色的积木
 public void ReplaceDeliveredBrick(LegoBrick deliveredBrick)
 {
-    // 保留最初的生产位置、颜色和尺寸
-    LegoBrick replacement = new LegoBrick(
-        deliveredBrick.LegoPose,
-        Color,
-        deliveredBrick.Size);
+    Parameters.LegoColor randomColor =
+        brickColors[random.Next(brickColors.Length)];
 
-    // 计算传送带当前相对于初始位置的位移
+    // 使用积木创建时保存的生产位置，
+    // 朝向使用当前来源生产线的角度
+    Pose spawnPose = new Pose(
+        deliveredBrick.LegoPose.Location.X,
+        deliveredBrick.LegoPose.Location.Y,
+        Angle);
+
+    LegoBrick replacement = new LegoBrick(
+        spawnPose,
+        randomColor,
+        deliveredBrick.Size)
+    {
+        OriginLine = this
+    };
+
+    // 根据生产线当前运动进度，修正补充积木的位置
     int forwardSteps = tickCount <= stepsPerDirection
         ? tickCount
         : 2 * stepsPerDirection - tickCount;

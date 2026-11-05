@@ -92,6 +92,29 @@ public partial class MainWindow : Window
             vm.ResetAngle();
         }
     }
+
+    private void SetupProductionLines_Click(
+        object? sender,
+    Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (DataContext is smartFactoryApp.ViewModels.MainViewModel viewModel)
+        {
+            viewModel.SetupProductionLines();
+        }
+    }
+
+
+    private void Order_Click(
+    object? sender,
+    Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (DataContext is smartFactoryApp.ViewModels.MainViewModel viewModel)
+        {
+            viewModel.CreateOrder();
+        }
+    }
+
+
     private void Start_Click(object? sender, RoutedEventArgs e)
     {
         ViewModel?.StartProduction();
@@ -124,6 +147,24 @@ private void Undock_Click(object? sender, RoutedEventArgs e)
     }
 }
 
+private void GoToDelivery_Click(
+    object? sender,
+    Avalonia.Interactivity.RoutedEventArgs e)
+{
+    if (DataContext is smartFactoryApp.ViewModels.MainViewModel viewModel)
+    {
+        viewModel.GoToDelivery();
+    }
+}
 
+private void GoToPickUp_Click(
+    object? sender,
+    Avalonia.Interactivity.RoutedEventArgs e)
+{
+    if (DataContext is smartFactoryApp.ViewModels.MainViewModel viewModel)
+    {
+        viewModel.GoToPickUp();
+    }
+}
 
 }

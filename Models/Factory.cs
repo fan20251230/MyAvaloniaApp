@@ -15,6 +15,9 @@ public class Factory
 {
     Robot robot;
 
+    // 工厂的物流管理对象
+    public Logistics Logistics { get; } = new Logistics();
+
     // 当前机器人抓住的积木
     private LegoBrick? dockedBrick = null;
     private List<LegoBrick> freeBricks = new List<LegoBrick>();
@@ -26,7 +29,10 @@ public class Factory
     public double RobotX => robot.Location.X;
     public double RobotY => robot.Location.Y;
     public double RobotAngle => robot.Angle;
-    private bool nextDeliveryIsGood = true;
+    private readonly Random deliveryRandom = new Random();
+
+    // 最近一次有效交付的质检结果
+    public bool LastDeliveryAccepted { get; private set; }
 
 // 计算机器人夹爪中心 TCP 的实际位置
 public PointF GetRobotTCP()
@@ -223,6 +229,11 @@ public void RecycleBricksBewegen()
 
         // 维修完成，允许重新抓取
         brick.Status = BrickStatus.Ready;
+        // 机器人空手时，根据新到达的回收积木更新计划
+        if (dockedBrick == null)
+        {
+            UpdatePickUpPlan();
+        }
     }
 }
 
@@ -298,15 +309,23 @@ public UndockResult Undock()
     brick.Angle = 0;
     brick.IsDocked = false;
 
-    // 质检决定运输方向
-    brick.Status = nextDeliveryIsGood
+    // 每次有效交付独立随机判断：50%通过，50%回收
+    LastDeliveryAccepted = deliveryRandom.Next(2) == 0;
+
+    brick.Status = LastDeliveryAccepted
         ? BrickStatus.ToCustomer
         : BrickStatus.ToRecycle;
 
-    // 下一次有效交付使用相反结果
-    nextDeliveryIsGood = !nextDeliveryIsGood;
+    // 质检通过、送给客户时才计入订单
+    if (brick.Status == BrickStatus.ToCustomer)
+    {
+        Logistics.BrickDelivered(brick.Color);
+    }
 
     dockedBrick = null;
+
+    // 根据剩余需求重新选择取货目标
+    UpdatePickUpPlan();
 
     return UndockResult.Success;
 }
@@ -337,6 +356,143 @@ private void UpdateDockedBrick()
     public ProductionLine ProductionYellow => productionYellow;
     public ProductionLine ProductionGreen => productionGreen;
 
+    // 是否已经设置过生产线
+public bool ProductionLinesAreSetup { get; private set; } = false;
+
+// 点击 Setup Production Lines 时调用
+public void SetupProductionLines()
+{
+    // 避免重复生成
+    if (ProductionLinesAreSetup)
+        return;
+
+    productionRed.CreateBricks();
+    productionBlue.CreateBricks();
+    productionYellow.CreateBricks();
+    productionGreen.CreateBricks();
+
+    ProductionLinesAreSetup = true;
+}
+
+
+// 更新下一次取货计划
+public void UpdatePickUpPlan()
+{
+    Logistics.PlanNextPickUp(
+        new[]
+        {
+            productionRed,
+            productionBlue,
+            productionYellow,
+            productionGreen
+        },
+        freeBricks);
+}
+
+// 获取当前任务提示
+public string GetTaskInfo()
+{
+    if (!Logistics.HasOrder)
+        return "No order yet: click \"Order\"";
+
+    if (Logistics.IsOrderComplete)
+        return $"Order complete: all {Logistics.TotalOrdered} bricks delivered";
+
+    int step = Logistics.TotalDelivered + 1;
+    int total = Logistics.TotalOrdered;
+
+    if (dockedBrick != null)
+    {
+        return $"Step {step}/{total}: Bring the " +
+               $"{dockedBrick.Color} brick to delivery";
+    }
+
+    LegoBrick? target = Logistics.CurrentBrick;
+
+    if (target == null)
+        return $"Step {step}/{total}: Waiting for an available brick";
+
+    return $"Step {step}/{total}: Pick {target.Color} brick " +
+           $"from {Logistics.PickStation} and bring to delivery";
+}
+
+
+// 携带积木，定位到交付区前方
+public bool GoToDelivery()
+{
+    if (dockedBrick == null)
+        return false;
+
+    robot.Angle = 0;
+    robot.Location = new Point(263, 130);
+
+    // 同时更新抓住的积木位置
+    UpdateDockedBrick();
+
+    return true;
+}
+
+public bool GoToPickUp()
+{
+    // 携带积木时，应先去交付
+    if (dockedBrick != null)
+        return false;
+
+    UpdatePickUpPlan();
+
+    LegoBrick? target = Logistics.CurrentBrick;
+
+    if (target == null)
+        return false;
+
+    // 目标积木的中心
+    double targetX = target.Location.X + 6;
+    double targetY = target.Location.Y + 6;
+
+    // 定位后，夹爪距离目标中心24像素
+    const double approachDistance = 24;
+
+    double newAngle;
+    double robotX;
+    double robotY;
+
+    if (productionRed.Bricks.Contains(target))
+    {
+        // 红色线：从右边接近，夹爪朝左
+        newAngle = 270;
+        robotX = targetX + approachDistance - 10;
+        robotY = targetY - 25;
+    }
+    else if (productionBlue.Bricks.Contains(target))
+    {
+        // 蓝色线：从左边接近，夹爪朝右
+        newAngle = 90;
+        robotX = targetX - approachDistance - 60;
+        robotY = targetY - 25;
+    }
+    else
+    {
+        // 黄色线、绿色线和中央回收线：
+        // 从上方接近，夹爪朝下
+        newAngle = 180;
+        robotX = targetX - 35;
+        robotY = targetY - approachDistance - 50;
+    }
+
+    int newX = (int)Math.Round(robotX);
+    int newY = (int)Math.Round(robotY);
+
+    // 定位位置不能与传送带发生碰撞
+    if (Kollidiert(newX, newY, newAngle))
+        return false;
+
+    robot.Angle = newAngle;
+    robot.Location = new Point(newX, newY);
+
+    return true;
+}
+
+
 public IEnumerable<LegoBrick> AlleBricks()
 {
     foreach (ProductionLine line in new[]
@@ -357,26 +513,14 @@ public IEnumerable<LegoBrick> AlleBricks()
 
 
 
-// 根据交付积木的颜色，通知对应生产线补充一块
+// 通知积木最初所属的生产线补充
 private void ReplaceDeliveredBrick(LegoBrick brick)
 {
-    switch (brick.Color)
+    brick.OriginLine?.ReplaceDeliveredBrick(brick);
+
+    if (dockedBrick == null)
     {
-        case LegoColor.red:
-            productionRed.ReplaceDeliveredBrick(brick);
-            break;
-
-        case LegoColor.blue:
-            productionBlue.ReplaceDeliveredBrick(brick);
-            break;
-
-        case LegoColor.yellow:
-            productionYellow.ReplaceDeliveredBrick(brick);
-            break;
-
-        case LegoColor.green:
-            productionGreen.ReplaceDeliveredBrick(brick);
-            break;
+        UpdatePickUpPlan();
     }
 }
 
@@ -478,6 +622,11 @@ collisionAreas.Add(new CollisionArea(
     }
        
     UpdateDockedBrick();
+    // 空手时，尝试自动抓取夹爪附近的积木
+    if (dockedBrick == null)
+    {
+        Dock();
+    }
 
     }
     public void RobotRotateRight()
@@ -673,6 +822,66 @@ private bool Kollidiert(int robotX, int robotY, double robotAngle)
     return false;
 }
 
+// 从当前生产线库存中随机选8块，生成可完成的订单
+public bool CreateAvailableOrder()
+{
+    List<LegoColor> availableColors = new();
 
+    foreach (ProductionLine line in new[]
+    {
+        productionRed,
+        productionBlue,
+        productionYellow,
+        productionGreen
+    })
+    {
+        foreach (LegoBrick brick in line.Bricks)
+        {
+            availableColors.Add(brick.Color);
+        }
+    }
+
+    const int orderSize = 8;
+
+    if (availableColors.Count < orderSize)
+        return false;
+
+    int yellow = 0;
+    int blue = 0;
+    int red = 0;
+    int green = 0;
+
+    for (int i = 0; i < orderSize; i++)
+    {
+        int index = Random.Shared.Next(availableColors.Count);
+        LegoColor color = availableColors[index];
+
+        // 只从临时列表移除，实际积木保持不动
+        availableColors.RemoveAt(index);
+
+        switch (color)
+        {
+            case LegoColor.yellow:
+                yellow++;
+                break;
+
+            case LegoColor.blue:
+                blue++;
+                break;
+
+            case LegoColor.red:
+                red++;
+                break;
+
+            case LegoColor.green:
+                green++;
+                break;
+        }
+    }
+
+    Logistics.CreateOrder(yellow, blue, red, green);
+
+    return true;
+}
 
 }

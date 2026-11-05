@@ -47,6 +47,86 @@ public partial class MainViewModel : ViewModelBase
     public double RobotX => factory.RobotX;
     public double RobotY => factory.RobotY;
     public double RobotAngle => factory.RobotAngle;
+    public string TaskInfo => factory.GetTaskInfo();
+
+    // 订单数量
+public int YellowOrdered =>
+    factory.Logistics.GetOrdered(LegoColor.yellow);
+
+public int BlueOrdered =>
+    factory.Logistics.GetOrdered(LegoColor.blue);
+
+public int RedOrdered =>
+    factory.Logistics.GetOrdered(LegoColor.red);
+
+public int GreenOrdered =>
+    factory.Logistics.GetOrdered(LegoColor.green);
+
+// 已成功交付数量
+public int YellowDelivered =>
+    factory.Logistics.GetDelivered(LegoColor.yellow);
+
+public int BlueDelivered =>
+    factory.Logistics.GetDelivered(LegoColor.blue);
+
+public int RedDelivered =>
+    factory.Logistics.GetDelivered(LegoColor.red);
+
+public int GreenDelivered =>
+    factory.Logistics.GetDelivered(LegoColor.green);
+
+
+
+
+
+
+
+// 通知界面刷新订单和交付数量
+private void NotifyOrderChanged()
+{
+    OnPropertyChanged(nameof(YellowOrdered));
+    OnPropertyChanged(nameof(BlueOrdered));
+    OnPropertyChanged(nameof(RedOrdered));
+    OnPropertyChanged(nameof(GreenOrdered));
+
+    OnPropertyChanged(nameof(YellowDelivered));
+    OnPropertyChanged(nameof(BlueDelivered));
+    OnPropertyChanged(nameof(RedDelivered));
+    OnPropertyChanged(nameof(GreenDelivered));
+}
+
+public void CreateOrder()
+{
+    if (!factory.ProductionLinesAreSetup)
+    {
+        UndockInfo = "Set up production lines first.";
+        return;
+    }
+
+    // 当前订单进行中，避免重复点击清空交付进度
+    if (factory.Logistics.HasOrder &&
+        !factory.Logistics.IsOrderComplete)
+    {
+        UndockInfo = "An order is already active.";
+        return;
+    }
+
+    if (!factory.CreateAvailableOrder())
+    {
+        UndockInfo = "Not enough bricks to create an order.";
+        return;
+    }
+
+    factory.UpdatePickUpPlan();
+
+    NotifyOrderChanged();
+    OnPropertyChanged(nameof(TaskInfo));
+
+    UndockInfo = "Order created.";
+}
+
+
+
 
      // 红色生产线
     public double ProductionRedX => factory.ProductionRed.Location.X;
@@ -110,6 +190,7 @@ public partial class MainViewModel : ViewModelBase
     factory.RecycleBricksBewegen();
 
     NotifyLegoBricksPoseChanged();
+    OnPropertyChanged(nameof(TaskInfo));
 }
     public void MoveUp()
     {
@@ -171,14 +252,16 @@ public partial class MainViewModel : ViewModelBase
         NotifyRobotPoseChanged();
     }
     private void NotifyRobotPoseChanged()
-    {
-        OnPropertyChanged(nameof(RobotX));
-        OnPropertyChanged(nameof(RobotY));
-        OnPropertyChanged(nameof(RobotAngle));
+{
+    OnPropertyChanged(nameof(RobotX));
+    OnPropertyChanged(nameof(RobotY));
+    OnPropertyChanged(nameof(RobotAngle));
 
-         // 同时刷新 Lego 积木的位置和角度
-        NotifyLegoBricksPoseChanged();
-    }
+    NotifyLegoBricksPoseChanged();
+
+    // 自动抓取后，立即刷新任务阶段提示
+    OnPropertyChanged(nameof(TaskInfo));
+}
 private void NotifyLegoBricksPoseChanged()
 {
     // 先同步新增和删除
@@ -187,6 +270,23 @@ private void NotifyLegoBricksPoseChanged()
     // 再刷新坐标和角度
     foreach (LegoBrickViewModel brick in BricksView)
         brick.Refresh();
+}
+
+// 控制 Setup 按钮是否可用
+public bool CanSetupProductionLines =>
+    !factory.ProductionLinesAreSetup;
+
+// 设置四条生产线并刷新界面
+public void SetupProductionLines()
+{
+    if (!CanSetupProductionLines)
+        return;
+
+    factory.SetupProductionLines();
+
+    NotifyLegoBricksPoseChanged();
+
+    OnPropertyChanged(nameof(CanSetupProductionLines));
 }
 
     public void StartProduction()
@@ -207,6 +307,7 @@ private void NotifyLegoBricksPoseChanged()
     if (factory.Dock())
     {
         NotifyLegoBricksPoseChanged();
+        OnPropertyChanged(nameof(TaskInfo));
     }
 }
 
@@ -221,8 +322,12 @@ public void Undock()
     switch (result)
     {
         case UndockResult.Success:
-            UndockInfo = "Brick delivered.";
+            UndockInfo = factory.LastDeliveryAccepted
+                ? "Brick sent to the customer"
+                : "Brick rejected: sent to the recycle line";
             NotifyLegoBricksPoseChanged();
+            NotifyOrderChanged();
+            OnPropertyChanged(nameof(TaskInfo));
             break;
 
         case UndockResult.NoBrick:
@@ -355,8 +460,40 @@ private void SyncBricksView()
         if (!displayedBricks.Contains(brick))
             BricksView.Add(new LegoBrickViewModel(brick));
     }
+
+
 }
 
+
+public void GoToDelivery()
+{
+    StopRobot();
+
+    if (!factory.GoToDelivery())
+    {
+        UndockInfo = "No brick docked: pick up a brick first.";
+        return;
+    }
+
+    NotifyRobotPoseChanged();
+
+    UndockInfo =
+        "Robot at delivery: drive forward, then click Undock";
+}
+
+
+public void GoToPickUp()
+{
+    StopRobot();
+
+    bool positioned = factory.GoToPickUp();
+
+    NotifyRobotPoseChanged();
+
+    UndockInfo = positioned
+        ? "Robot at the line: drive forward to dock the brick"
+        : "Cannot position for pickup: check the task and carried brick.";
+}
 
 
 }

@@ -23,11 +23,110 @@
            Stretch="None"/>
  
     <Canvas x:Name="canvasFactory" HorizontalAlignment="Left" Height="600" VerticalAlignment="Top" Width="900" >
-      
+
+        <!-- 订单与已交付数量 -->
+        <Grid Canvas.Left="620"
+                Canvas.Top="20"
+                Width="260"
+                RowDefinitions="32,30,30,30,30"
+                ColumnDefinitions="80,80,80"
+                RowSpacing="5"
+                ColumnSpacing="10">
+
+            <!-- 统一数字框和颜色标签的样式 -->
+            <Grid.Styles>
+                <Style Selector="TextBox">
+                    <Setter Property="IsReadOnly" Value="True"/>
+                    <Setter Property="TextAlignment" Value="Right"/>
+                    <Setter Property="VerticalContentAlignment" Value="Center"/>
+                    <Setter Property="MinHeight" Value="0"/>
+                    <Setter Property="Padding" Value="6,2"/>
+                </Style>
+
+                <Style Selector="Border">
+                    <Setter Property="Padding" Value="4"/>
+                </Style>
+
+                <Style Selector="Border > TextBlock">
+                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                    <Setter Property="VerticalAlignment" Value="Center"/>
+                    <Setter Property="FontWeight" Value="Bold"/>
+                </Style>
+            </Grid.Styles>
+
+            <!-- 表头：下一步将 Order 接成按钮 -->
+            <Button Grid.Row="0" Grid.Column="0"
+                    Content="Order"
+                    FontSize="20"
+                    FontWeight="Bold"
+                    Padding="6,0"
+                    MinHeight="0"
+                    HorizontalAlignment="Stretch"
+                    Click="Order_Click"/>
+
+            <TextBlock Grid.Row="0" Grid.Column="2"
+                        Text="Delivered"
+                        FontWeight="Bold"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"/>
+
+            <!-- 黄色 -->
+            <Border Grid.Row="1" Grid.Column="0"
+                    Background="#FFE000">
+                <TextBlock Text="yellow" Foreground="Black"/>
+            </Border>
+
+            <TextBox Grid.Row="1" Grid.Column="1"
+                    Text="{Binding YellowOrdered, Mode=OneWay}"/>
+
+            <TextBox Grid.Row="1" Grid.Column="2"
+                    Text="{Binding YellowDelivered, Mode=OneWay}"/>
+
+            <!-- 蓝色 -->
+            <Border Grid.Row="2" Grid.Column="0"
+                    Background="#4863DB">
+                <TextBlock Text="blue" Foreground="White"/>
+            </Border>
+
+            <TextBox Grid.Row="2" Grid.Column="1"
+                Text="{Binding BlueOrdered, Mode=OneWay}"/>
+
+            <TextBox Grid.Row="2" Grid.Column="2"
+                Text="{Binding BlueDelivered, Mode=OneWay}"/>
+
+            <!-- 红色 -->
+            <Border Grid.Row="3" Grid.Column="0"
+                    Background="#B52228">
+                <TextBlock Text="red" Foreground="White"/>
+            </Border>
+
+            <TextBox Grid.Row="3" Grid.Column="1"
+                Text="{Binding RedOrdered, Mode=OneWay}"/>
+
+            <TextBox Grid.Row="3" Grid.Column="2"
+                Text="{Binding RedDelivered, Mode=OneWay}"/>
+
+            <!-- 绿色 -->
+            <Border Grid.Row="4" Grid.Column="0"
+                    Background="#299A25">
+                <TextBlock Text="green" Foreground="White"/>
+            </Border>
+
+            <TextBox Grid.Row="4" Grid.Column="1"
+                    Text="{Binding GreenOrdered, Mode=OneWay}"/>
+
+            <TextBox Grid.Row="4" Grid.Column="2"
+                    Text="{Binding GreenDelivered, Mode=OneWay}"/>
+
+        </Grid>
+
+
+
+
        
         <!-- 机器人运动模式选择 -->
         <StackPanel Canvas.Left="620"
-                    Canvas.Top="430"
+                    Canvas.Top="450"
                     Orientation="Vertical"
                     Spacing="10">
 
@@ -44,7 +143,7 @@
 
         <!-- 机器人控制面板：3列 × 4行 -->
         <Grid Canvas.Left="750"
-                Canvas.Top="430"
+                Canvas.Top="450"
                 Width="140"
                 Height="150"
                 RowDefinitions="*,*,*,*"
@@ -86,11 +185,41 @@
                 Content="↻" Click="RotateRight_Click"/>
 
         </Grid>
+
+        <!-- 初始化生产线 -->
+        <Button Canvas.Left="620"
+            Canvas.Top="310"
+            Width="260"
+            Height="40"
+            Content="Setup Production Lines"
+            IsEnabled="{Binding CanSetupProductionLines}"
+            Click="SetupProductionLines_Click"/>
+        
+            <!-- 快捷定位：GoToPickUp -->
+        <Button Canvas.Left="620"
+            Canvas.Top="365"
+            Width="125"
+            Height="30"
+            Content="GoToPickUp"
+            HorizontalContentAlignment="Center"
+            Click="GoToPickUp_Click"/>
+
+        <!-- 快捷定位：左侧位置预留给 GoToPickUp -->
+        <Button Canvas.Left="755"
+                Canvas.Top="365"
+                Width="125"
+                Height="30"
+                Content="GoToDelivery"
+                HorizontalContentAlignment="Center"
+                Click="GoToDelivery_Click"/>
+
+
+
         <!-- 传送带 Start / Stop 控制 -->
         <Grid Canvas.Left="620"
-                Canvas.Top="340"
+                Canvas.Top="410"
                 Width="260"
-                Height="40"
+                Height="30"
                 ColumnDefinitions="*,*"
                 ColumnSpacing="10">
 
@@ -105,27 +234,43 @@
                 Click="Stop_Click"/>
 
         </Grid>
-        <!-- Undock 操作反馈 -->
+
+        <!-- 当前取货计划及任务阶段 -->
         <TextBlock Canvas.Left="620"
-                Canvas.Top="150"
-                Width="270"
+           Canvas.Top="200"
+           Width="260"
+           Height="65"
+           Text="{Binding TaskInfo}"
+           TextWrapping="Wrap"
+           FontSize="14"
+           FontWeight="Bold"
+           Foreground="DarkBlue"/>
+
+
+        <!-- 操作状态提示 -->
+        <TextBlock Canvas.Left="620"
+                Canvas.Top="270"
+                Width="260"
+                Height="35"
                 Text="{Binding UndockInfo}"
                 TextWrapping="Wrap"
                 FontSize="14"
                 Foreground="Black"/>
 
-        <!-- Dock / Undock 控制 -->
+        <!-- 抓取与释放：放在 Step 下方 -->
         <StackPanel Canvas.Left="620"
-                    Canvas.Top="390"
-                    Orientation="Horizontal"
-                    Spacing="10">
+                    Canvas.Top="530"
+                    Orientation="Vertical"
+                    Spacing="5">
 
             <Button Content="Dock"
-                    Width="120"
+                    Width="110"
+                    Height="30"
                     Click="Dock_Click"/>
 
             <Button Content="Undock"
-                    Width="120"
+                    Width="110"
+                    Height="30"
                     Click="Undock_Click"/>
 
         </StackPanel>
@@ -150,7 +295,7 @@
            Canvas.Top="{Binding ProductionRedY}"
            Width="110"
            Height="45"
-           Stroke="Orange"
+           Stroke="Transparent"
            StrokeThickness="2"
            Fill="Transparent"
            IsHitTestVisible="False"
@@ -184,7 +329,7 @@
            Canvas.Top="{Binding ProductionBlueY}"
            Width="110"
            Height="45"
-           Stroke="Orange"
+           Stroke="Transparent"
            StrokeThickness="2"
            Fill="Transparent"
            IsHitTestVisible="False"
@@ -215,7 +360,7 @@
            Canvas.Top="{Binding ProductionYellowY}"
            Width="110"
            Height="45"
-           Stroke="Orange"
+           Stroke="Transparent"
            StrokeThickness="2"
            Fill="Transparent"
            IsHitTestVisible="False"/>
@@ -242,7 +387,7 @@
            Canvas.Top="{Binding ProductionGreenY}"
            Width="110"
            Height="45"
-           Stroke="Orange"
+           Stroke="Transparent"
            StrokeThickness="2"
            Fill="Transparent"
            IsHitTestVisible="False"/>
@@ -321,7 +466,7 @@
                Canvas.Top="-2"
                Width="30"
                Height="52"
-               Stroke="Blue"
+               Stroke="Transparent"
                StrokeThickness="2"
                Fill="Transparent"
                IsHitTestVisible="False"/>
@@ -361,7 +506,7 @@
            Canvas.Top="40"
            Width="185"
            Height="65"
-           Stroke="Orange"
+           Stroke="Transparent"
            StrokeThickness="2"
            Fill="Transparent"
            IsHitTestVisible="False"/>
@@ -379,16 +524,18 @@
            Canvas.Top="280"
            Width="110"
            Height="45"
-           Stroke="Orange"
+           Stroke="Transparent"
            StrokeThickness="2"
            Fill="Transparent"
            IsHitTestVisible="False"/>
 
         
-        <!-- 机器人位置和角度 -->
-        <StackPanel Canvas.Left="620"
-            Canvas.Top="240"
-            Spacing="4">
+        <!-- 机器人位置和角度：工厂区域左下角 -->
+        <StackPanel Canvas.Left="45"
+            Canvas.Top="510"
+            Spacing="2"
+            ZIndex="20"
+            IsHitTestVisible="False">
 
             <TextBlock Foreground="Red"
                         FontSize="14"

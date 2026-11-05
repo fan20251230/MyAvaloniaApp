@@ -21,6 +21,10 @@ namespace smartFactoryApp.Models
 
         public Pose LegoPose { get; }
 
+        // 最初生成这块积木的生产线
+        // 回收、抓取和交付时都保留这个来源
+        public ProductionLine? OriginLine { get; set; }
+
         public LegoBrick(Pose pose, LegoColor color, LegoSize size) : base(pose)
         {
             Color = color;
@@ -28,4 +32,7 @@ namespace smartFactoryApp.Models
             LegoPose = pose;
         }
     }
+
+    
+
 }
